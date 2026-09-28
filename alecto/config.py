@@ -25,7 +25,13 @@ class AlectoConfig:
     def __post_init__(self):
         if self.default_timeout_s <= 0:
             raise ValueError("default_timeout_s must be > 0")
-        self.data_dir = self.data_dir.expanduser()
+        # Accept str as well as Path: callers routinely construct this with a
+        # plain string, and the declared Path type must not be a runtime trap.
+        self.data_dir = Path(self.data_dir).expanduser()
+        if self.evidence_dir is not None:
+            self.evidence_dir = Path(self.evidence_dir).expanduser()
+        if self.report_dir is not None:
+            self.report_dir = Path(self.report_dir).expanduser()
         if self.evidence_dir is None:
             self.evidence_dir = self.data_dir / "evidence"
         if self.report_dir is None:

@@ -84,11 +84,10 @@ Configuration is resolved in this order (highest priority first):
 
 | Environment variable | Purpose | Default |
 |---|---|---|
-| `ALECTO_DATA` | Data directory path | `~/.local/share/alecto` |
+| `ALECTO_DATA` | Data directory path | `~/.alecto` |
 | `ALECTO_TIMEOUT` | Request timeout (seconds) | `30.0` |
-| `ALECTO_CONCURRENCY` | Default concurrency | `1` |
-| `ALECTO_TARGET` | Default target URL | *(none)* |
-| `ALECTO_MODE` | Target mode (`openai`/`ollama`/`mock`) | `openai` |
+| `ALECTO_MAX_CONCURRENT` | Maximum concurrent tasks | `4` |
+| `ALECTO_MOCK` | Use the mock backend (`1`/`true`/`yes`) | `false` |
 
 The `AlectoConfig` dataclass holds all settings:
 
@@ -97,8 +96,8 @@ from alecto import AlectoConfig
 
 config = AlectoConfig(
     data_dir="./data",
-    timeout_s=60.0,
-    concurrency=4,
+    default_timeout_s=60.0,
+    max_concurrent_tasks=4,
 )
 ```
 
