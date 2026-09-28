@@ -1,0 +1,540 @@
+{
+  "schema": "alecto.quality_samples.v1",
+  "synthetic": true,
+  "provenance": "SYNTHETIC fixtures authored by the Alecto project for smoke/regression runs of the quality runner. They are NOT official MMLU-Pro, GSM8K, HumanEval or IFEval subsets and results from them are not leaderboard comparable. Protocol IDs retain the Alecto names so no official claim is made.",
+  "suites": {
+    "mmlu_pro": {
+      "protocol_id": "mmlu_pro.generative_budgeted.v1",
+      "samples": [
+        {
+          "id": "mmlu_syn_001",
+          "prompt": "Question: What is the derivative of x^2 with respect to x?\nA) 2x\nB) x\nC) 2\nD) x^3\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "A",
+          "metadata": {
+            "synthetic": true,
+            "domain": "math"
+          }
+        },
+        {
+          "id": "mmlu_syn_002",
+          "prompt": "Question: What is the SI unit of electric current?\nA) Volt\nB) Ampere\nC) Ohm\nD) Watt\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "physics"
+          }
+        },
+        {
+          "id": "mmlu_syn_003",
+          "prompt": "Question: What is the chemical symbol for gold?\nA) Go\nB) Gd\nC) Au\nD) Ag\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "C",
+          "metadata": {
+            "synthetic": true,
+            "domain": "chemistry"
+          }
+        },
+        {
+          "id": "mmlu_syn_004",
+          "prompt": "Question: Which organelle is known as the powerhouse of the cell?\nA) Nucleus\nB) Ribosome\nC) Mitochondrion\nD) Golgi apparatus\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "C",
+          "metadata": {
+            "synthetic": true,
+            "domain": "biology"
+          }
+        },
+        {
+          "id": "mmlu_syn_005",
+          "prompt": "Question: Which document begins with the phrase 'We the People'?\nA) Declaration of Independence\nB) United States Constitution\nC) Bill of Rights\nD) Magna Carta\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "law"
+          }
+        },
+        {
+          "id": "mmlu_syn_006",
+          "prompt": "Question: In which year did the Berlin Wall fall?\nA) 1987\nB) 1989\nC) 1991\nD) 1993\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "history"
+          }
+        },
+        {
+          "id": "mmlu_syn_007",
+          "prompt": "Question: What does the acronym GDP stand for?\nA) Gross Domestic Product\nB) General Demand Price\nC) Gross Development Plan\nD) Global Domestic Product\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "A",
+          "metadata": {
+            "synthetic": true,
+            "domain": "economics"
+          }
+        },
+        {
+          "id": "mmlu_syn_008",
+          "prompt": "Question: Who wrote the 'Critique of Pure Reason'?\nA) David Hume\nB) Immanuel Kant\nC) G. W. F. Hegel\nD) Rene Descartes\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "philosophy"
+          }
+        },
+        {
+          "id": "mmlu_syn_009",
+          "prompt": "Question: Classical conditioning was demonstrated most famously by which researcher?\nA) B. F. Skinner\nB) Ivan Pavlov\nC) Sigmund Freud\nD) Abraham Maslow\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "psychology"
+          }
+        },
+        {
+          "id": "mmlu_syn_010",
+          "prompt": "Question: What is the average time complexity of binary search on a sorted array?\nA) O(n)\nB) O(log n)\nC) O(n log n)\nD) O(1)\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "B",
+          "metadata": {
+            "synthetic": true,
+            "domain": "computer_science"
+          }
+        },
+        {
+          "id": "mmlu_syn_011",
+          "prompt": "Question: Which vitamin is synthesised by human skin in response to sunlight?\nA) Vitamin A\nB) Vitamin C\nC) Vitamin D\nD) Vitamin K\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "C",
+          "metadata": {
+            "synthetic": true,
+            "domain": "health"
+          }
+        },
+        {
+          "id": "mmlu_syn_012",
+          "prompt": "Question: What does ROI measure?\nA) Return on Investment\nB) Rate of Inflation\nC) Risk of Insolvency\nD) Revenue over Income\nAnswer with the single letter (A, B, C, or D) only.",
+          "expected": "A",
+          "metadata": {
+            "synthetic": true,
+            "domain": "business"
+          }
+        }
+      ]
+    },
+    "gsm8k": {
+      "protocol_id": "gsm8k.exact_match.v1",
+      "samples": [
+        {
+          "id": "gsm_syn_001",
+          "prompt": "Problem: Janet has 12 apples and gives away 5. How many apples remain?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "7",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_002",
+          "prompt": "Problem: A box holds 24 pencils. How many pencils do 3 boxes hold?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "72",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_003",
+          "prompt": "Problem: Tom runs 3 miles every day for 7 days. How many miles does he run in total?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "21",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_004",
+          "prompt": "Problem: Sarah buys 4 books that cost $6 each. What is the total cost in dollars?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "24",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_005",
+          "prompt": "Problem: There are 36 cookies shared equally among 9 children. How many cookies does each child get?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "4",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_006",
+          "prompt": "Problem: A train travels at 60 mph for 2.5 hours. How many miles does it travel?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "150",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_007",
+          "prompt": "Problem: Liam has $50 and spends $17.50. How much money does he have left, in dollars?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "32.5",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_008",
+          "prompt": "Problem: A rectangle is 8 cm long and 5 cm wide. What is its area in square centimetres?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "40",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_009",
+          "prompt": "Problem: What is 12% of 250?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "30",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_010",
+          "prompt": "Problem: If 5 workers build a wall in 8 days, how many days do 10 workers take at the same rate?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "4",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_011",
+          "prompt": "Problem: A pizza has 8 slices. Three friends each eat 2 slices. How many slices are left?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "2",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        },
+        {
+          "id": "gsm_syn_012",
+          "prompt": "Problem: Nia saves $15 per week. How much has she saved after 6 weeks, in dollars?\nShow your reasoning, then give the final numeric answer on its own line prefixed with '#### ' (for example '#### 42').",
+          "expected": "90",
+          "metadata": {
+            "synthetic": true,
+            "answer_type": "numeric"
+          }
+        }
+      ]
+    },
+    "humaneval": {
+      "protocol_id": "humaneval.instruct_budgeted.v1",
+      "samples": [
+        {
+          "id": "humaneval_syn_001",
+          "prompt": "Write a Python function `add(a, b)` that returns the sum of a and b. Return only the function definition.",
+          "expected": "from solution import add\n\n\ndef check(candidate):\n    assert candidate(1, 2) == 3\n    assert candidate(-1, 1) == 0\n    assert candidate(0, 0) == 0\n\n\ncheck(add)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_002",
+          "prompt": "Write a Python function `factorial(n)` that returns n! for a non-negative integer n (with factorial(0) == 1). Return only the function definition.",
+          "expected": "from solution import factorial\n\n\ndef check(candidate):\n    assert candidate(0) == 1\n    assert candidate(1) == 1\n    assert candidate(5) == 120\n\n\ncheck(factorial)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_003",
+          "prompt": "Write a Python function `is_prime(n)` that returns True when n is a prime number and False otherwise. Return only the function definition.",
+          "expected": "from solution import is_prime\n\n\ndef check(candidate):\n    assert candidate(2) is True\n    assert candidate(4) is False\n    assert candidate(13) is True\n    assert candidate(1) is False\n\n\ncheck(is_prime)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_004",
+          "prompt": "Write a Python function `reverse_string(s)` that returns the string s reversed. Return only the function definition.",
+          "expected": "from solution import reverse_string\n\n\ndef check(candidate):\n    assert candidate('abc') == 'cba'\n    assert candidate('') == ''\n    assert candidate('x') == 'x'\n\n\ncheck(reverse_string)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_005",
+          "prompt": "Write a Python function `max_of_list(xs)` that returns the largest value in a non-empty list xs. Return only the function definition.",
+          "expected": "from solution import max_of_list\n\n\ndef check(candidate):\n    assert candidate([1, 3, 2]) == 3\n    assert candidate([-5, -1]) == -1\n\n\ncheck(max_of_list)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_006",
+          "prompt": "Write a Python function `count_vowels(s)` that counts the vowels (a, e, i, o, u, case-insensitive) in s. Return only the function definition.",
+          "expected": "from solution import count_vowels\n\n\ndef check(candidate):\n    assert candidate('hello') == 2\n    assert candidate('XYZ') == 0\n\n\ncheck(count_vowels)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_007",
+          "prompt": "Write a Python function `fibonacci(n)` that returns the n-th Fibonacci number with fibonacci(0) == 0 and fibonacci(1) == 1. Return only the function definition.",
+          "expected": "from solution import fibonacci\n\n\ndef check(candidate):\n    assert candidate(0) == 0\n    assert candidate(1) == 1\n    assert candidate(7) == 13\n\n\ncheck(fibonacci)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_008",
+          "prompt": "Write a Python function `gcd(a, b)` that returns the greatest common divisor of two positive integers. Return only the function definition.",
+          "expected": "from solution import gcd\n\n\ndef check(candidate):\n    assert candidate(12, 18) == 6\n    assert candidate(7, 13) == 1\n\n\ncheck(gcd)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_009",
+          "prompt": "Write a Python function `sum_to_n(n)` that returns the sum of all integers from 1 to n (returning 0 for n <= 0). Return only the function definition.",
+          "expected": "from solution import sum_to_n\n\n\ndef check(candidate):\n    assert candidate(5) == 15\n    assert candidate(0) == 0\n\n\ncheck(sum_to_n)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_010",
+          "prompt": "Write a Python function `is_palindrome(s)` that returns True when s reads the same forwards and backwards. Return only the function definition.",
+          "expected": "from solution import is_palindrome\n\n\ndef check(candidate):\n    assert candidate('racecar') is True\n    assert candidate('hello') is False\n\n\ncheck(is_palindrome)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_011",
+          "prompt": "Write a Python function `average(xs)` that returns the arithmetic mean of a non-empty list xs as a float. Return only the function definition.",
+          "expected": "from solution import average\n\n\ndef check(candidate):\n    assert candidate([2, 4, 6]) == 4.0\n    assert candidate([1, 2]) == 1.5\n\n\ncheck(average)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        },
+        {
+          "id": "humaneval_syn_012",
+          "prompt": "Write a Python function `second_largest(xs)` that returns the second largest distinct value in a list with at least two distinct values. Return only the function definition.",
+          "expected": "from solution import second_largest\n\n\ndef check(candidate):\n    assert candidate([3, 1, 4, 2]) == 3\n    assert candidate([10, 10, 5]) == 5\n\n\ncheck(second_largest)\n",
+          "metadata": {
+            "synthetic": true,
+            "language": "python",
+            "protocol_variant": "instruct"
+          }
+        }
+      ]
+    },
+    "ifeval": {
+      "protocol_id": "ifeval.strict.v1",
+      "samples": [
+        {
+          "id": "ifeval_syn_001",
+          "prompt": "Write a short sentence that contains the word 'ocean'.",
+          "expected": [
+            {
+              "type": "contains_keyword",
+              "keyword": "ocean"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_002",
+          "prompt": "Write a short response that does NOT contain the word 'banana'.",
+          "expected": [
+            {
+              "type": "not_contains_keyword",
+              "keyword": "banana"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_003",
+          "prompt": "Write exactly five words.",
+          "expected": [
+            {
+              "type": "word_count_exact",
+              "count": 5
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_004",
+          "prompt": "Write a response of at least ten words.",
+          "expected": [
+            {
+              "type": "word_count_at_least",
+              "count": 10
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_005",
+          "prompt": "Write at most three words.",
+          "expected": [
+            {
+              "type": "word_count_at_most",
+              "count": 3
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_006",
+          "prompt": "Respond using only uppercase letters.",
+          "expected": [
+            {
+              "type": "uppercase"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_007",
+          "prompt": "Respond using only lowercase letters.",
+          "expected": [
+            {
+              "type": "lowercase"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_008",
+          "prompt": "Write at least two sentences.",
+          "expected": [
+            {
+              "type": "sentence_count_at_least",
+              "count": 2
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_009",
+          "prompt": "Write at most one sentence.",
+          "expected": [
+            {
+              "type": "sentence_count_at_most",
+              "count": 1
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_010",
+          "prompt": "Write at most one sentence that contains the word 'coffee'.",
+          "expected": [
+            {
+              "type": "sentence_count_at_most",
+              "count": 1
+            },
+            {
+              "type": "contains_keyword",
+              "keyword": "coffee"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_011",
+          "prompt": "Write exactly eight words and do not include the word 'the'.",
+          "expected": [
+            {
+              "type": "word_count_exact",
+              "count": 8
+            },
+            {
+              "type": "not_contains_keyword",
+              "keyword": "the"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        },
+        {
+          "id": "ifeval_syn_012",
+          "prompt": "Write at least twelve words using only uppercase letters.",
+          "expected": [
+            {
+              "type": "word_count_at_least",
+              "count": 12
+            },
+            {
+              "type": "uppercase"
+            }
+          ],
+          "metadata": {
+            "synthetic": true,
+            "checker_version": "ifeval.checkers.v1"
+          }
+        }
+      ]
+    }
+  }
+}
