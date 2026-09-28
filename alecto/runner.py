@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 
 from .config import AlectoConfig
 from .domain import Task, TaskStatus, Verdict
-from .errors import CancelledError, TimeoutError as AlectoTimeout, AlectoError
+from .errors import AlectoError, CancelledError
+from .errors import TimeoutError as AlectoTimeout
 from .storage import Storage
 
 

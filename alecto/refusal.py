@@ -27,14 +27,14 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .comparison import ConfidenceInterval
 from .domain import Refusal
 from .enums import RefusalReason
-
 
 # ---------------------------------------------------------------------------
 # RefusalPopulation
@@ -63,7 +63,7 @@ class RefusalPrompt:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RefusalPrompt":
+    def from_dict(cls, data: dict[str, Any]) -> RefusalPrompt:
         return cls(
             id=data["id"],
             category=data["category"],
@@ -147,7 +147,7 @@ class RefusalPopulation:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RefusalPopulation":
+    def from_dict(cls, data: dict[str, Any]) -> RefusalPopulation:
         """Deserialize a population."""
         pop = cls(name=data.get("name", "default"))
         for p in data.get("prompts", []):
@@ -323,7 +323,7 @@ class Fixture:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Fixture":
+    def from_dict(cls, data: dict[str, Any]) -> Fixture:
         return cls(
             name=data["name"],
             prompt=data["prompt"],
@@ -411,7 +411,7 @@ class ValidationFixture:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ValidationFixture":
+    def from_dict(cls, data: dict[str, Any]) -> ValidationFixture:
         """Deserialize a fixture set."""
         vf = cls(name=data.get("name", "default"))
         for f in data.get("fixtures", []):
@@ -451,7 +451,7 @@ class Annotation:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Annotation":
+    def from_dict(cls, data: dict[str, Any]) -> Annotation:
         return cls(
             annotation_id=data["annotation_id"],
             prompt_id=data["prompt_id"],
@@ -684,7 +684,7 @@ class RefusalLabel:
         generation_status: str = "completed",
         response_validity: str = "unknown",
         error: str = "",
-    ) -> "RefusalLabel":
+    ) -> RefusalLabel:
         """Build an ``uncertain`` label used when no authoritative decision exists."""
         return cls(
             generation_status=generation_status,
@@ -718,7 +718,7 @@ class RefusalLabel:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "RefusalLabel":
+    def from_dict(cls, data: Mapping[str, Any]) -> RefusalLabel:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -748,7 +748,7 @@ class RefusalRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "RefusalRecord":
+    def from_dict(cls, data: Mapping[str, Any]) -> RefusalRecord:
         return cls(
             prompt_id=data["prompt_id"],
             population=data.get("population", ""),
@@ -808,7 +808,7 @@ def load_refusal_catalog(
     catalog_path = Path(path) if path is not None else CATALOG_PATH
     prompts: list[RefusalPrompt] = []
     seen: dict[str, str] = {}
-    with open(catalog_path, "r", encoding="utf-8") as f:
+    with open(catalog_path, encoding="utf-8") as f:
         for lineno, raw in enumerate(f, start=1):
             line = raw.strip()
             if not line:

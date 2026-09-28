@@ -2,9 +2,16 @@
 
 import pytest
 
-from alecto.benchmarks import MathBenchmark, CodingBenchmark, ReasoningBenchmark, LanguageBenchmark, run_benchmark, BENCHMARKS
+from alecto.benchmarks import (
+    BENCHMARKS,
+    CodingBenchmark,
+    LanguageBenchmark,
+    MathBenchmark,
+    ReasoningBenchmark,
+    run_benchmark,
+)
 from alecto.domain import TargetSpec, Task
-from alecto.enums import TargetKind, BenchmarkCategory
+from alecto.enums import BenchmarkCategory, TargetKind
 
 
 @pytest.fixture

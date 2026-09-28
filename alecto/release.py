@@ -192,7 +192,7 @@ class ReleaseGuide:
         return "\n".join(lines)
 
     @classmethod
-    def default_guide(cls) -> "ReleaseGuide":
+    def default_guide(cls) -> ReleaseGuide:
         guide = cls()
         guide.add_section(
             "Release checklist",
@@ -281,7 +281,7 @@ class ExamplePlan:
         return problems
 
     @classmethod
-    def default(cls) -> "ExamplePlan":
+    def default(cls) -> ExamplePlan:
         return cls([{"target_id": "local_vllm", "target_title": "Workstation vLLM Q4"}])
 
     @staticmethod

@@ -179,5 +179,6 @@ MIT — see [LICENSE](LICENSE) for details.
 ## Documentation
 
 - **User guide**: [docs/alecto.md](docs/alecto.md)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 - **Source code**: [alecto/](alecto/)
 - **Tests**: [tests/](tests/)

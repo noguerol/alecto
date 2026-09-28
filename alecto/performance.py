@@ -14,8 +14,9 @@ import inspect
 import math
 import random
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass, field
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from .enums import LoopMode
 
@@ -128,7 +129,7 @@ class TimingMetrics:
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-    def merge(self, other: "TimingMetrics") -> "TimingMetrics":
+    def merge(self, other: TimingMetrics) -> TimingMetrics:
         """Merge two metric sets (e.g. across iterations)."""
 
         def _avg(a: float | None, b: float | None) -> float | None:
@@ -779,7 +780,7 @@ async def run_performance_cell(cell: PerformanceCell, request_fn: RequestFn) -> 
                 max_queue=getattr(runner, "max_queue", 0),
                 dropped=getattr(runner, "dropped", 0),
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             runner_task.cancel()
             break
 

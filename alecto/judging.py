@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-
 # ---------------------------------------------------------------------------
 # JudgeCriteria
 # ---------------------------------------------------------------------------
@@ -40,7 +39,7 @@ class JudgeCriteria:
         }
 
     @classmethod
-    def default_criteria(cls) -> list["JudgeCriteria"]:
+    def default_criteria(cls) -> list[JudgeCriteria]:
         """Return the default set of criteria."""
         return [
             cls(name="accuracy", weight=1.0, description="Factual correctness of the response"),
@@ -86,7 +85,7 @@ class JudgeResult:
         criteria: list[JudgeCriteria],
         target: str,
         threshold: float,
-    ) -> "JudgeResult":
+    ) -> JudgeResult:
         """Build a JudgeResult from per-criterion scores."""
         total_weight = sum(c.weight for c in criteria)
         if total_weight == 0:

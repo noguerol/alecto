@@ -2,6 +2,7 @@
 
 import pytest
 
+from alecto.enums import RefusalReason
 from alecto.refusal import (
     Annotation,
     AnnotationSchema,
@@ -12,7 +13,6 @@ from alecto.refusal import (
     check_refusal,
     format_refusal,
 )
-from alecto.enums import RefusalReason
 
 
 class TestCheckRefusal:

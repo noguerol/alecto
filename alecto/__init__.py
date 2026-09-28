@@ -7,7 +7,7 @@ the base installation (spec §4.1, AC-22).
 
 from .adapters import TargetAdapter, get_adapter
 from .config import AlectoConfig, default_config
-from .domain import Plan, Task, TargetSpec
+from .domain import Plan, TargetSpec, Task
 from .enums import LoopMode, TargetKind
 from .errors import AlectoError
 from .performance import PerformanceCell, run_performance_cell
@@ -15,7 +15,7 @@ from .quality import QUALITY_SUITES, load_quality_samples, run_quality_suite
 from .refusal import compute_refusal_metrics
 from .streaming import StreamEvent
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "__version__",

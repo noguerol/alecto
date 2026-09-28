@@ -1,7 +1,7 @@
 """Unit tests for comparison engine."""
 
 
-from alecto.comparison import compare_pairwise, compare_group
+from alecto.comparison import compare_group, compare_pairwise
 from alecto.domain import BenchmarkResult
 from alecto.enums import BenchmarkCategory, ComparisonMode
 

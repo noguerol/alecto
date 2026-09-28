@@ -4,7 +4,7 @@ import pytest
 
 from alecto.config import AlectoConfig
 from alecto.domain import Plan, TargetSpec, Task
-from alecto.enums import TargetKind, TaskStatus, LoopMode, LoopStrategy
+from alecto.enums import LoopMode, LoopStrategy, TargetKind, TaskStatus
 from alecto.scheduler import Scheduler
 from alecto.storage import Storage
 

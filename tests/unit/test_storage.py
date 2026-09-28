@@ -1,6 +1,7 @@
 """Unit tests for storage."""
 
 import pytest
+
 from alecto.domain import TargetSpec, Task
 from alecto.enums import TargetKind, TaskStatus
 from alecto.storage import Storage

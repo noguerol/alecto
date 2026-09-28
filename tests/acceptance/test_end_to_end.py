@@ -1,17 +1,18 @@
 """End-to-end acceptance tests."""
 
 import json
+
 import pytest
 
+from alecto.benchmarks import run_benchmark
+from alecto.cli import run_self_test
+from alecto.comparison import compare_pairwise
 from alecto.config import AlectoConfig
 from alecto.domain import TargetSpec, Task
 from alecto.enums import TargetKind
-from alecto.benchmarks import run_benchmark
-from alecto.storage import Storage
-from alecto.reporting import generate_report, save_report
-from alecto.comparison import compare_pairwise
 from alecto.refusal import check_refusal
-from alecto.cli import run_self_test
+from alecto.reporting import generate_report, save_report
+from alecto.storage import Storage
 
 
 @pytest.fixture

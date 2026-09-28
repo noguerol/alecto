@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from alecto.release import ReleaseReport, ReleaseGuide, ExamplePlan
+from alecto.release import ExamplePlan, ReleaseGuide, ReleaseReport
 
 TARGETS = [{"target_id": "local_vllm", "target_title": "Workstation vLLM Q4"}]
 

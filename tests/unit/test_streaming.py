@@ -24,7 +24,6 @@ from alecto.performance import (
 )
 from alecto.streaming import MAX_EVENT_BYTES, StreamEvent, iter_sse_events
 
-
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------

@@ -23,7 +23,6 @@ from typing import Any
 from .domain import BenchmarkResult, ComparisonResult
 from .enums import ComparisonMode
 
-
 # ---------------------------------------------------------------------------
 # PairedDelta — paired differences between two model outputs
 # ---------------------------------------------------------------------------

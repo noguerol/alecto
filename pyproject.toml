@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "alecto"
-version = "0.1.1"
+version = "0.1.2"
 description = "Local-first, agent-native execution engine for LLM benchmarking"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,7 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 mcp = ["mcp>=1.0"]
 benchmarks = ["numpy>=1.24"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.21", "ruff>=0.4"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.21", "ruff>=0.15,<0.17"]
 
 [project.scripts]
 alecto = "alecto.cli:main"
@@ -31,3 +31,22 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# An explicit rule set keeps linting reproducible: ruff's *default* rules have
+# changed between releases (0.16 added many), so relying on them makes CI
+# results depend on whichever version pip happens to resolve.
+select = [
+    "E4",    # pycodestyle: imports
+    "E7",    # pycodestyle: statements
+    "E9",    # pycodestyle: runtime
+    "F",     # pyflakes
+    "I",     # isort
+    "UP015", # redundant open modes
+    "UP035", # deprecated imports
+    "UP037", # quoted annotations
+    "UP041", # timeout error aliases
+    "B009",  # getattr with a constant attribute
+]
+ignore = ["E501"]

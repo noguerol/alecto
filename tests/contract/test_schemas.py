@@ -2,7 +2,7 @@
 
 
 
-from alecto.domain import TargetSpec, Plan, Task, Evidence
+from alecto.domain import Evidence, Plan, TargetSpec, Task
 from alecto.enums import TargetKind
 
 

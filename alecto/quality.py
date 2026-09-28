@@ -703,7 +703,7 @@ QUALITY_PROFILE_CAPS: dict[str, dict[str, int]] = {
 def load_quality_manifest(path: str | os.PathLike[str] | None = None) -> dict[str, Any]:
     """Load the bundled synthetic quality-samples manifest."""
     manifest_path = Path(path) if path is not None else _QUALITY_SAMPLES_PATH
-    with open(manifest_path, "r", encoding="utf-8") as f:
+    with open(manifest_path, encoding="utf-8") as f:
         return json.load(f)
 
 

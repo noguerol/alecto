@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from alecto.domain import Task, BenchmarkResult, ComparisonResult
-from alecto.enums import BenchmarkCategory, Verdict, ComparisonMode
-from alecto.reporting import generate_report, save_report, format_report
+from alecto.domain import BenchmarkResult, ComparisonResult, Task
+from alecto.enums import BenchmarkCategory, ComparisonMode, Verdict
+from alecto.reporting import format_report, generate_report, save_report
 
 
 @pytest.fixture

@@ -1,25 +1,25 @@
 """Unit tests for the quality suite (spec §10)."""
 
 import json
+
 import pytest
 
+from alecto.enums import BenchmarkCategory
 from alecto.quality import (
-    QualityBenchmark,
-    QualitySample,
-    QualityResult,
-    MMLUProBenchmark,
+    SANDBOX_HOST,
     GSM8KBenchmark,
     HumanEvalBenchmark,
-    SANDBOX_HOST,
     IFEvalBenchmark,
-    run_quality_benchmark,
+    MMLUProBenchmark,
+    QualityBenchmark,
+    QualityResult,
+    QualitySample,
+    _check_constraint,
     _extract_final_answer,
     _normalize_number,
     _pass_at_k,
-    _check_constraint,
+    run_quality_benchmark,
 )
-from alecto.enums import BenchmarkCategory
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

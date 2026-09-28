@@ -1,8 +1,25 @@
 """Unit tests for domain records."""
 
 import pytest
-from alecto.domain import TargetSpec, Plan, Task, Evidence, BenchmarkResult, ComparisonResult, Refusal, LoopState
-from alecto.enums import TargetKind, TaskStatus, EvidenceKind, BenchmarkCategory, ComparisonMode, RefusalReason
+
+from alecto.domain import (
+    BenchmarkResult,
+    ComparisonResult,
+    Evidence,
+    LoopState,
+    Plan,
+    Refusal,
+    TargetSpec,
+    Task,
+)
+from alecto.enums import (
+    BenchmarkCategory,
+    ComparisonMode,
+    EvidenceKind,
+    RefusalReason,
+    TargetKind,
+    TaskStatus,
+)
 
 
 class TestTargetSpec:

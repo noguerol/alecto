@@ -20,8 +20,9 @@ Nothing here knows about httpx specifically: any response object exposing
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
-from typing import Any, AsyncIterator, Literal
+from typing import Any, Literal
 
 from .errors import StreamMalformedError
 

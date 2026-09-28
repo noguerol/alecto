@@ -3,6 +3,36 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-09-28
+
+Release tooling and repository hygiene.
+
+### Added
+
+- Continuous integration (`.github/workflows/ci.yml`): the test suite and lint
+  run on Python 3.11, 3.12 and 3.13, plus an offline CLI smoke test and a
+  distribution build that asserts the bundled fixtures ship with the wheel and
+  that the package version matches the repository.
+- An explicit `[tool.ruff.lint]` rule set. Ruff's *default* rules changed
+  between releases (0.16 enables many more than 0.15), so relying on them made
+  lint results depend on whichever version the resolver picked — CI would have
+  failed on its first run with 72 findings that were not in the working tree.
+
+### Changed
+
+- Pinned the tested Ruff range to `>=0.15,<0.17` and declared
+  `target-version = "py311"` to match `requires-python`.
+- Applied the resulting mechanical fixes (import ordering, quoted annotations,
+  redundant open modes, `asyncio.TimeoutError` alias). No behavioural change:
+  532 tests pass on 3.11 and 3.14.
+- README documentation section now points at the user guide and changelog.
+
+### Removed
+
+- The internal design specification is no longer versioned; it is a private
+  working document and is kept out by a local exclude rule. It was never
+  included in the built distributions, which is now asserted in CI.
+
 ## [0.1.1] — 2026-09-28
 
 Hardening release. Found by executing the CLI and configuration against a clean

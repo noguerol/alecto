@@ -14,11 +14,10 @@ from alecto.domain import TargetSpec
 from alecto.enums import TargetKind
 from alecto.planner import (
     Planner,
-    select_samples,
-    estimate_cost,
     ThroughputEstimate,
+    estimate_cost,
+    select_samples,
 )
-
 
 # ---------------------------------------------------------------------------
 # Sample selection determinism

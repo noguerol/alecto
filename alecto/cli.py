@@ -68,11 +68,11 @@ def _resolve_config(args):
 
 def run_self_test():
     """Run a basic self-test to verify the installation."""
+    from .adapters import MockAdapter
+    from .config import default_config
     from .domain import TargetSpec, Task
     from .enums import TargetKind
-    from .config import default_config
     from .storage import Storage
-    from .adapters import MockAdapter
 
     config = default_config()
     config.ensure_dirs()

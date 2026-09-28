@@ -1,19 +1,19 @@
 """Unit tests for alecto.comparison module (spec §12, §15.2, §13.4, AC-15, AC-17)."""
 
 import math
+
 import pytest
 
 from alecto.comparison import (
-    PairedDelta,
     ConfidenceInterval,
     FactorialAnalysis,
+    PairedDelta,
     PPLLogitAdapter,
-    compare_pairwise,
     compare_group,
+    compare_pairwise,
 )
 from alecto.domain import BenchmarkResult
 from alecto.enums import BenchmarkCategory, ComparisonMode
-
 
 # ---------------------------------------------------------------------------
 # PairedDelta tests

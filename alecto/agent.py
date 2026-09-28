@@ -10,11 +10,11 @@ Stdlib-only.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from .errors import ValidationError
-
 
 SCHEMA_VERSION = "1.0"
 MCP_PROTOCOL_VERSION = "2024-11-05"
@@ -241,7 +241,7 @@ class AgentCatalogue:
             for op in self._ops.values()
         ]
 
-    def inventory_matches_handlers(self, dispatcher: "AgentDispatcher") -> bool:
+    def inventory_matches_handlers(self, dispatcher: AgentDispatcher) -> bool:
         """Schema and handler inventories must match exactly (spec §7.1)."""
         expected = {op.name for op in self._ops.values() if op.handler}
         return expected == set(dispatcher.handlers.keys())

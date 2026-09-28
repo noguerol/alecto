@@ -4,7 +4,8 @@ import json
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -14,6 +15,8 @@ from .errors import (
     CapabilityUnavailable,
     StreamMalformedError,
     TargetUnreachableError,
+)
+from .errors import (
     TimeoutError as AlectoTimeout,
 )
 from .streaming import StreamEvent, iter_sse_events

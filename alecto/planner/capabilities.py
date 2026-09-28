@@ -53,7 +53,7 @@ def probe_target(target: Any, level: ProbeLevel | str = ProbeLevel.BASIC) -> Cap
     # Basic probe: check attributes/flags the target exposes, if any.
     # A mock or unknown target exposes nothing, so all fields stay None.
     if hasattr(target, "capabilities"):
-        caps = getattr(target, "capabilities")
+        caps = target.capabilities
         if isinstance(caps, dict):
             if "streaming" in caps:
                 report.streaming = bool(caps["streaming"])

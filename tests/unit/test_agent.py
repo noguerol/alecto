@@ -7,8 +7,8 @@ import pytest
 
 from alecto.agent import (
     AgentDispatcher,
-    MCPStdioAdapter,
     ManifestFormat,
+    MCPStdioAdapter,
     Operation,
     default_catalogue,
 )
