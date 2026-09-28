@@ -14,6 +14,8 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
+from .comparison import ComparisonMode
+from .enums import TargetKind
 from .errors import ValidationError
 
 SCHEMA_VERSION = "1.0"
@@ -57,7 +59,17 @@ def _default_operations() -> list[Operation]:
         Operation(
             name="alecto_configure_target",
             description="Create or update a named target endpoint specification.",
-            input_schema=_props("target", "mode"),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "target": {"type": "string", "description": "target id"},
+                    "mode": {"type": "string", "enum": [k.value for k in TargetKind]},
+                    "endpoint": {"type": "string", "description": "base URL, e.g. http://host:8081/v1"},
+                    "model": {"type": "string"},
+                    "title": {"type": "string", "description": "human-readable label"},
+                },
+                "required": ["target", "mode"],
+            },
             output_schema={"type": "object", "properties": {"target_id": {"type": "string"}, "target_title": {"type": "string"}, "revision": {"type": "string"}}},
             side_effects=["mutates target configuration"],
         ),
@@ -69,46 +81,59 @@ def _default_operations() -> list[Operation]:
         ),
         Operation(
             name="alecto_capabilities",
-            description="Probe a target for capability information at a given probe level.",
+            description="Probe a configured target for capability information. Only observed capabilities are reported; anything not observed stays null.",
             input_schema=_props("target_id", "probe_level"),
             output_schema={"type": "object", "properties": {"capabilities": {"type": "object"}}},
         ),
         Operation(
             name="alecto_list_suites",
-            description="List installed benchmark suites and their prerequisites.",
+            description="List benchmark suites and how many bundled samples each one has.",
             input_schema=_props("installed_only", types="boolean", required=False),
             output_schema={"type": "object", "properties": {"suites": {"type": "array"}}},
         ),
         Operation(
             name="alecto_create_plan",
             description="Create a bounded benchmark plan for the given targets and profile.",
-            input_schema=_props("target_ids", "profile", "budget_s", required=False),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "target_ids": {"type": "array", "items": {"type": "string"}},
+                    "profile": {"type": "string", "enum": ["smoke", "quick", "compare", "standard"]},
+                    "budget_s": {"type": "number"},
+                    "suite": {"type": "string"},
+                    "seed": {"type": "integer"},
+                    "prompt_tps": {"type": "number", "description": "measured prefill throughput; assumed when omitted"},
+                    "output_tps": {"type": "number", "description": "measured decode throughput; assumed when omitted"},
+                    "expected_output_tokens": {"type": "integer"},
+                },
+                "required": ["target_ids", "profile"],
+            },
             output_schema={"type": "object", "properties": {"plan_id": {"type": "string"}, "plan_hash": {"type": "string"}, "coverage": {"type": "object"}}},
             side_effects=["creates plan artifact"],
         ),
         Operation(
             name="alecto_start_run",
-            description="Atomically commit a durable job for the plan and spawn a worker.",
+            description="Execute a plan against its target and record the results. Execution is synchronous; repeating the call with the same idempotency_key returns the existing run instead of re-running it.",
             input_schema=_props("plan_id", "idempotency_key"),
             output_schema={"type": "object", "properties": {"run_id": {"type": "string"}, "state": {"type": "string"}}},
             side_effects=["creates durable job"],
         ),
         Operation(
             name="alecto_run_status",
-            description="Poll structured progress for a run with an event cursor.",
+            description="Report the recorded state and progress of a run. Omit run_id for the most recent run.",
             input_schema=_props("run_id", required=False),
             output_schema={"type": "object", "properties": {"state": {"type": "string"}, "progress": {"type": "object"}, "next_cursor": {"type": "integer"}}},
         ),
         Operation(
             name="alecto_cancel_run",
-            description="Cancel a run; stops new requests and performs bounded cleanup.",
+            description="Mark a run cancelled. A run that is already terminal is returned unchanged.",
             input_schema=_props("run_id"),
             output_schema={"type": "object", "properties": {"state": {"type": "string"}}},
             side_effects=["cancels durable job"],
         ),
         Operation(
             name="alecto_resume_run",
-            description="Resume an interrupted run under a new attempt identity.",
+            description="Re-open a run that did not complete, under a new idempotency key. Refuses (alecto.tool.unsupported) for a completed run.",
             input_schema=_props("run_id", "idempotency_key"),
             output_schema={"type": "object", "properties": {"run_id": {"type": "string"}, "remaining_work": {"type": "object"}}},
             side_effects=["resumes durable job"],
@@ -116,13 +141,29 @@ def _default_operations() -> list[Operation]:
         Operation(
             name="alecto_get_results",
             description="Read metrics and paginated evidence references for a run.",
-            input_schema=_props("run_id", "suite", "cursor", "limit", required=False),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "suite": {"type": "string"},
+                    "cursor": {"type": "integer"},
+                    "limit": {"type": "integer"},
+                },
+                "required": ["run_id"],
+            },
             output_schema={"type": "object", "properties": {"metrics": {"type": "array"}, "evidence_refs": {"type": "array"}}},
         ),
         Operation(
             name="alecto_compare",
-            description="Compare runs in a given comparison mode.",
-            input_schema=_props("run_ids", "mode"),
+            description="Compare two or more recorded runs. 'pairwise' compares the first two; 'group' compares all and records an experiment when the runs carry factor labels.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "run_ids": {"type": "array", "items": {"type": "string"}},
+                    "mode": {"type": "string", "enum": [m.value for m in ComparisonMode]},
+                },
+                "required": ["run_ids", "mode"],
+            },
             output_schema={"type": "object", "properties": {"comparison_id": {"type": "string"}, "summary": {"type": "object"}}},
         ),
         Operation(
@@ -133,15 +174,31 @@ def _default_operations() -> list[Operation]:
         ),
         Operation(
             name="alecto_export_report",
-            description="Export a report for a run or comparison in the given format.",
-            input_schema=_props("run_id", "format", "output_path"),
+            description="Write a report artifact for a run. Markdown uses the detailed run report; json/csv/html use the domain report renderer.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "format": {"type": "string", "enum": ["markdown", "md", "json", "csv", "html"]},
+                    "output_path": {"type": "string"},
+                },
+                "required": ["run_id", "format"],
+            },
             output_schema={"type": "object", "properties": {"path": {"type": "string"}, "digest": {"type": "string"}}},
             side_effects=["writes report artifact"],
         ),
         Operation(
             name="alecto_judge_run",
-            description="Start a separate endpoint-judge job for a run.",
-            input_schema=_props("run_id", "judge_target", "budget_s", required=False),
+            description="Score a run's stored responses against the built-in rubric and write a judge report. The rubric judge is deterministic and needs no endpoint.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "judge_target": {"type": "string"},
+                    "budget_s": {"type": "number"},
+                },
+                "required": ["run_id"],
+            },
             output_schema={"type": "object", "properties": {"judge_job_id": {"type": "string"}}},
             side_effects=["creates judge job"],
         ),
@@ -304,8 +361,11 @@ class AgentDispatcher:
         try:
             envelope["data"] = handler(arguments)
         except Exception as exc:  # handler failure
+            # A handler may carry a stable error code (see alecto.service);
+            # otherwise the failure is reported generically. Never swallowed.
+            code = getattr(exc, "code", None) or "alecto.tool.error"
             envelope["ok"] = False
-            envelope["error"] = _error("alecto.tool.error", str(exc), retryable=False)
+            envelope["error"] = _error(code, str(exc), retryable=bool(getattr(exc, "retryable", False)))
         return envelope
 
     def dispatch_all(self, operations: list[tuple[str, dict[str, Any]]]) -> list[dict[str, Any]]:

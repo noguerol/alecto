@@ -17,7 +17,7 @@ Key capabilities:
 - **Refusal detection** — classifies model refusals and extracts refusal causes.
 - **Judging** — LLM-as-a-judge scoring with rubric-based quality evaluation.
 - **Comparison** — pairwise and multi-run comparison with delta metrics.
-- **Agent-native interfaces** — CLI, Python API, and MCP stdio protocol with a shared operation catalogue (15 operations).
+- **Agent-native interfaces** — CLI, Python API, and MCP stdio protocol with a shared operation catalogue (15 operations). A bundled skill (`alecto skill`) lets a harness such as Claude Code, pi or omp drive the whole tool.
 
 ---
 
@@ -58,6 +58,24 @@ alecto configure --target "http://localhost:11434/v1" --mode ollama
 # Run a benchmark plan
 alecto run --target my-target --benchmark gsm8k --data-dir ./data
 ```
+
+### Let an agent harness drive it
+
+Alecto ships a skill and an MCP server so a coding harness can use it directly:
+
+```bash
+# Serve the 15 operations over MCP stdio
+alecto mcp
+
+# Discover the tool schemas in whichever flavour your harness wants
+alecto catalogue --format mcp        # or canonical | openai | anthropic
+
+# Install the bundled skill into a skills directory
+alecto skill --install-dir ~/.claude/skills
+```
+
+See [alecto/SKILL.md](alecto/SKILL.md) for the full agent-facing contract:
+operations, error codes, metric semantics and the workflow.
 
 ### List tasks
 
@@ -178,6 +196,7 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ## Documentation
 
+- **Agent skill**: [alecto/SKILL.md](alecto/SKILL.md) — the contract for harnesses
 - **User guide**: [docs/alecto.md](docs/alecto.md)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 - **Source code**: [alecto/](alecto/)

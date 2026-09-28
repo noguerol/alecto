@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -301,7 +301,10 @@ def _run_sandbox_container(
         )
 
     tmpdir = tempfile.mkdtemp(prefix="alecto_sandbox_")
-    name = f"alecto_sandbox_{os.getpid()}_{int(time.time() * 1000) % 100000}"
+    # A millisecond-derived name collides when two evaluations start in the
+    # same millisecond, and one run's ``rm -f`` would then remove the
+    # other's container. The name must be unique per call.
+    name = f"alecto_sandbox_{os.getpid()}_{uuid.uuid4().hex[:12]}"
     try:
         solution_path = os.path.join(tmpdir, "solution.py")
         test_path = os.path.join(tmpdir, "run_test.py")
@@ -371,7 +374,6 @@ def _run_sandbox_container(
             "sandbox_mode": f"{SANDBOX_CONTAINER}:{runtime}",
         }
     except subprocess.TimeoutExpired:
-        subprocess.run([runtime, "rm", "-f", name], capture_output=True)
         return {
             "passed": False,
             "stdout": "",
@@ -380,6 +382,21 @@ def _run_sandbox_container(
             "sandbox_mode": f"{SANDBOX_CONTAINER}:{runtime}",
         }
     finally:
+        # Reap the container on every path, not only on timeout.
+        # ``subprocess.run(timeout=...)`` kills the *client* (``podman run``);
+        # the container keeps running under ``conmon`` until something removes
+        # it, so an interrupt or an unexpected error used to leak a container
+        # that ran until the host was rebooted. Removal must happen before the
+        # bind-mounted directory disappears, and must never mask the real
+        # result: a failing ``rm`` is swallowed deliberately.
+        try:
+            subprocess.run(
+                [runtime, "rm", "-f", "--time", "0", name],
+                capture_output=True,
+                timeout=30,
+            )
+        except Exception:  # noqa: BLE001 - cleanup must not change the verdict
+            pass
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 

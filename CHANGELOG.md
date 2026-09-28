@@ -3,6 +3,74 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] — 2026-09-28
+
+Agent integration: the MCP surface is now real and documented.
+
+Before this release the operation catalogue existed but nothing was wired to it —
+no handler was registered anywhere outside the tests, and there was no way to
+start the MCP server — so a harness could not use Alecto at all.
+
+### Added
+
+- **`alecto mcp`** — serves the operation catalogue over MCP stdio
+  (JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call`).
+- **`alecto/service.py`** — the service layer that binds all 15 catalogued
+  operations to real behaviour: named targets, planning, runs, results,
+  comparison, experiments, report export, rubric judging and the offline
+  self-test. `build_dispatcher()` is the Python entry point.
+- **`alecto catalogue --format …`** — emits the tool schemas as canonical JSON or
+  in MCP, OpenAI or Anthropic function-calling shapes.
+- **`alecto/SKILL.md`** — a distributable agent skill describing the
+  integration surfaces, the 15 operations, the error model, metric semantics and
+  the canonical workflow. Exposed via `alecto skill [--path|--install-dir]` and
+  shipped inside the wheel.
+- Handlers may carry a stable error code; `alecto.tool.unsupported` now
+  distinguishes "this build cannot do that" from a generic failure.
+
+### Fixed
+
+- **A timed-out sandbox leaked its container.** `subprocess.run(timeout=…)`
+  kills the client (`podman run`), but the container keeps running under
+  `conmon` until something removes it. Cleanup only ran on the timeout branch,
+  so an interrupt or an unexpected error left a container running until the host
+  was rebooted — dozens accumulated before it was noticed. Containers are now
+  reaped in a `finally` block on every path.
+- **Container names collided within a millisecond.** The name was derived from
+  `time.time() * 1000 % 100000`, so two evaluations starting in the same
+  millisecond shared a name and one run's `rm -f` could remove the other's
+  container. Names now include a random suffix.
+- A failure in the cleanup command itself no longer masks the real sandbox
+  result.
+- **A handler printing to stdout corrupted the MCP protocol channel.** The
+  self-test operation called the CLI implementation, which printed four lines,
+  so every response after it was unparseable. The self-test now has a silent
+  implementation, and the server redirects `sys.stdout` to stderr while
+  dispatching so no future handler can repeat the mistake.
+- `BenchmarkResult.category` was assigned a bare string where the storage
+  contract requires the enum, so a run could not be persisted.
+- Several operation descriptions claimed behaviour that does not exist ("spawn a
+  worker", "endpoint-judge job"); they now describe what the code does.
+- `alecto_get_results` reported `n_samples: null`; it reads the coverage counts.
+- `judge_run.budget_s` was typed as a string instead of a number.
+
+### Testing
+
+- `tests/unit/test_service.py` (23 tests): the full workflow against the offline
+  mock target, idempotent replay, explicit refusals, and MCP transport integrity
+  including the stdout-pollution regression.
+- `tests/unit/test_skill.py` (19 tests): a bidirectional guard that fails if the
+  skill omits a catalogued operation, documents one that does not exist, lists
+  the wrong arguments, contains an unresolvable import, a non-executing example,
+  a CLI command that is not registered, or an environment variable the code does
+  not read.
+- `tests/unit/test_quality.py::TestContainerSandboxReaping` (4 tests): drives the
+  sandbox path with a stubbed runtime to assert the container is removed on
+  timeout, on success, when cleanup itself fails, and that names never collide.
+  These run without a container runtime.
+
+581 tests pass; ruff clean.
+
 ## [0.1.4] — 2026-09-28
 
 Documentation accuracy. The user guide advertised an API that does not exist, so

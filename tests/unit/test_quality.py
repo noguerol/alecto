@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from alecto import quality
 from alecto.enums import BenchmarkCategory
 from alecto.quality import (
     SANDBOX_HOST,
@@ -378,3 +379,78 @@ class TestQualityResultSerialization:
         d = r.to_dict()
         assert d["details"] == {}
         assert d["raw_responses"] == []
+
+
+class TestContainerSandboxReaping:
+    """A timed-out sandbox must not leave a container running.
+
+    ``subprocess.run(timeout=...)`` only kills the client (``podman run``); the
+    container itself keeps running under ``conmon`` until something removes it.
+    The first version of this code cleaned up only on the timeout branch, and an
+    interrupt or an unexpected error leaked a container that ran until the host
+    was rebooted — dozens of them accumulated before anyone noticed.
+
+    These tests drive the real code path with a stubbed runner, so they need no
+    container runtime and still assert the exact commands issued.
+    """
+
+    @staticmethod
+    def _calls(monkeypatch, *, expire: bool):
+        import subprocess as real_subprocess
+
+        recorded = []
+
+        def fake_run(cmd, **kwargs):
+            recorded.append(list(cmd))
+            if cmd[:2] == ["podman", "run"] and expire:
+                raise real_subprocess.TimeoutExpired(cmd, kwargs.get("timeout", 1))
+            return real_subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+        monkeypatch.setattr(quality.subprocess, "run", fake_run)
+        monkeypatch.setattr(quality, "detect_container_sandbox", lambda: "podman")
+        monkeypatch.setattr(quality, "_sandbox_image", lambda: "img")
+        return recorded
+
+    def test_timeout_removes_the_container(self, monkeypatch):
+        recorded = self._calls(monkeypatch, expire=True)
+        result = quality._run_sandbox_container("code", "test", timeout=1)
+        assert result["stderr"] == "timeout"
+        assert result["passed"] is False
+        # The container was launched by name...
+        run_cmd = next(c for c in recorded if c[:2] == ["podman", "run"])
+        assert "--name" in run_cmd
+        name = run_cmd[run_cmd.index("--name") + 1]
+        # ...and removed despite the timeout.
+        assert ["podman", "rm", "-f", "--time", "0", name] in recorded
+
+    def test_success_also_removes_the_container(self, monkeypatch):
+        """Cleanup happens on every path, not just timeout."""
+        recorded = self._calls(monkeypatch, expire=False)
+        quality._run_sandbox_container("code", "test", timeout=1)
+        run_cmd = next(c for c in recorded if c[:2] == ["podman", "run"])
+        name = run_cmd[run_cmd.index("--name") + 1]
+        assert ["podman", "rm", "-f", "--time", "0", name] in recorded
+
+    def test_cleanup_failure_does_not_mask_the_result(self, monkeypatch):
+        """A failing ``podman rm`` must not turn a pass into an exception."""
+        import subprocess as real_subprocess
+
+        def fake_run(cmd, **kwargs):
+            if cmd[:3] == ["podman", "rm", "-f"]:
+                raise real_subprocess.TimeoutExpired(cmd, 1)
+            return real_subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+        monkeypatch.setattr(quality.subprocess, "run", fake_run)
+        monkeypatch.setattr(quality, "detect_container_sandbox", lambda: "podman")
+        monkeypatch.setattr(quality, "_sandbox_image", lambda: "img")
+        result = quality._run_sandbox_container("code", "test", timeout=1)
+        assert result["passed"] is True
+
+    def test_container_name_is_unique_per_call(self, monkeypatch):
+        """A shared name would let one run's cleanup kill another's container."""
+        recorded = self._calls(monkeypatch, expire=False)
+        quality._run_sandbox_container("a", "t", timeout=1)
+        quality._run_sandbox_container("b", "t", timeout=1)
+        names = [c[c.index("--name") + 1] for c in recorded if c[:2] == ["podman", "run"]]
+        assert len(names) == 2
+        assert names[0] != names[1]
