@@ -2,11 +2,14 @@
 
 This module is intentionally separate from :mod:`alecto.reporting`.  The latter
 renders the domain :class:`~alecto.domain.Report` object; this one consumes the
-*JSON artifacts* written by the standalone runners:
+*JSON artifacts* produced by a run:
 
-* ``quality-results.json``     -- written by ``the quality-suite runner``
-* ``refusal-results.json``     -- written by ``the refusal-suite runner``
-* ``performance-results.json`` -- optional performance/streaming artifact
+* the quality-suite artifact
+* the refusal-suite artifact
+* an optional performance/streaming artifact
+
+Artifact paths are supplied by the caller (see :func:`generate_run_report`), so
+this module carries no knowledge of how they were produced.
 
 A partial run is fully supported: any artifact may be missing and the report
 marks the corresponding section as ``not run`` / ``unsupported`` instead of
@@ -1007,14 +1010,14 @@ def _section_appendix(
     quality_entry = found.get("quality", {})
     if quality_entry.get("data") is not None:
         lines.append(
-            f"python3 the quality-suite runner --endpoint {endpoint or '<ENDPOINT>'} "
-            f"--model {model or '<MODEL>'} --out {quality_entry.get('path')}"
+            f"# quality-suite artifact for {endpoint or '<ENDPOINT>'} "
+            f"({model or '<MODEL>'}) -> {quality_entry.get('path')}"
         )
     refusal_entry = found.get("refusal", {})
     if refusal_entry.get("data") is not None:
         lines.append(
-            f"python3 the refusal-suite runner --endpoint {endpoint or '<ENDPOINT>'} "
-            f"--model {model or '<MODEL>'} --out {refusal_entry.get('path')}"
+            f"# refusal-suite artifact for {endpoint or '<ENDPOINT>'} "
+            f"({model or '<MODEL>'}) -> {refusal_entry.get('path')}"
         )
     perf_entry = found.get("performance", {})
     if perf_entry.get("data") is not None:

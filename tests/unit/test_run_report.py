@@ -274,20 +274,18 @@ def test_out_writes_markdown_file(tmp_path):
     assert out.read_text(encoding="utf-8") == text
 
 
-def test_runners_expose_report_md_flag():
-    # The standalone evaluation harnesses are development tooling and are not
-    # shipped in the repository, so this contract check is skipped in a clean
-    # checkout (it still runs in the author's working tree).
-    pytest.importorskip("run_quality_suite")
-    pytest.importorskip("run_refusal_suite")
-    import run_quality_suite
-    import run_refusal_suite
+def test_report_has_no_reproduction_commands_for_unshipped_tools():
+    """Reproduction help must describe artifacts, not name private harnesses."""
+    import tempfile
+    from pathlib import Path as _Path
 
-    quality_args = run_quality_suite.parse_args(["--report-md", "q.md"])
-    assert quality_args.report_md == "q.md"
+    with tempfile.TemporaryDirectory() as d:
+        root = _Path(d)
+        _write(root, "quality-results.json", _quality_payload())
+        text = generate_run_report(run_dir=root, generated_at=FIXED_TS)
 
-    refusal_args = run_refusal_suite.parse_args(["--report-md", "r.md"])
-    assert refusal_args.report_md == "r.md"
+    for private in ("run_quality_suite", "run_refusal_suite", "test_suite"):
+        assert private not in text
 
 
 # ---------------------------------------------------------------------------
@@ -344,36 +342,30 @@ def test_secret_looking_fields_are_redacted(tmp_path):
     assert "sk-EXAMPLE-NOTREAL-000000" not in text
 
 
-def test_test_suite_exposes_report_md_and_writes_performance_artifact(tmp_path):
-    # ``the standalone performance harness`` is an author-side harness and is not shipped; skip in a
-    # clean checkout rather than failing on a missing development module.
-    test_suite = pytest.importorskip("test_suite")
-
-    args = test_suite._parse_args(["--json-out", str(tmp_path / "p.json"), "--report-md", "x.md"])
-    assert args.report_md == "x.md"
-
-    results = {
-        "performance": [
-            {"cell": "closed-loop", "mode": "closed", "concurrency": 4, "e2e_ms": 1.0,
-             "ttft_ms": 0.5, "ttfb_ms": 0.1, "p50_ms": 1.0, "p90_ms": 1.0, "p95_ms": 1.0,
-             "tokens_per_s": 10.0, "wall_clock_s": 1.0, "n": 20}
-        ],
-        "concurrency_sweep": [
-            {"concurrency": 1, "ttft_ms": 0.4, "e2e_ms": 0.9, "request_rps": 2.0,
-             "wall_clock_s": 1.0, "n": 12}
+def test_performance_artifact_is_rendered_in_the_report(tmp_path):
+    """A performance artifact is consumable by the report generator."""
+    payload = {
+        "schema": "alecto.performance_results.v1",
+        "generated_at": FIXED_TS,
+        "endpoint": "http://localhost:8081/v1",
+        "model": "test-model",
+        "cells": [
+            {
+                "cell_id": "closed-loop", "mode": "closed", "workload": "chat",
+                "concurrency": 4, "samples": 20, "ttfb_ms": 0.1, "ttft_ms": 0.5,
+                "e2e_ms": 1.0, "p50_ms": 1.0, "p90_ms": 1.0, "p95_ms": 1.0,
+                "output_tps": 10.0, "wall_clock_s": 1.0, "n": 20,
+            },
+            {
+                "cell_id": "sweep-c1", "mode": "closed", "workload": "chat",
+                "concurrency": 1, "samples": 12, "ttfb_ms": 0.2, "ttft_ms": 0.4,
+                "e2e_ms": 0.9, "request_rps": 2.0, "wall_clock_s": 1.0, "n": 12,
+            },
         ],
     }
-    out = tmp_path / "performance-results.json"
-    test_suite._write_performance_artifact(results, str(out))
+    _write(tmp_path, "performance-results.json", payload)
+    _write(tmp_path, "quality-results.json", _quality_payload())
 
-    payload = json.loads(out.read_text())
-    assert payload["schema"] == "alecto.performance_results.v1"
-    assert len(payload["cells"]) == 2
-    assert payload["endpoint"]
-
-    # The artifact is consumable by the report generator.
-    q = _quality_payload()
-    _write(tmp_path, "quality-results.json", q)
     text = generate_run_report(run_dir=tmp_path, generated_at=FIXED_TS)
     assert "closed-loop" in text
     assert "sweep-c1" in text

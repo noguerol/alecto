@@ -3,6 +3,29 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-09-28
+
+Repository hygiene: removes project-specific names from versioned files and
+keeps local working-set ignore rules out of the repository.
+
+### Changed
+
+- `.gitignore` now contains only generic Python/editor/OS patterns. It no longer
+  enumerated this project's working files, because that list was itself project
+  information. Local ignore rules now live in `.git/info/exclude`, which is not
+  versioned.
+- `alecto.run_report` no longer names internal stand-alone harnesses in its
+  module docstring or in the generated "Reproduction Commands" appendix. The
+  appendix describes the artifacts and their provenance instead.
+- `alecto.lmeval_adapter` docstring uses a neutral output-directory placeholder.
+- The shipped test suite no longer imports or asserts against harnesses that are
+  not in the repository; the one report-generation test that depended on one now
+  builds its fixture directly.
+
+### Removed
+
+- References to internal working documents in the changelog and docstrings.
+
 ## [0.1.2] — 2026-09-28
 
 Release tooling and repository hygiene.
@@ -30,8 +53,8 @@ Release tooling and repository hygiene.
 ### Removed
 
 - The internal design specification is no longer versioned; it is a private
-  working document and is kept out by a local exclude rule. It was never
-  included in the built distributions, which is now asserted in CI.
+  working document, kept out of the repository by a local exclude rule. It was
+  never included in the built distributions, which is now asserted in CI.
 
 ## [0.1.1] — 2026-09-28
 
