@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "alecto"
+version = "0.1.0"
+description = "Local-first, agent-native execution engine for LLM benchmarking"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "httpx>=0.25",
+    "jsonschema>=4.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0"]
+benchmarks = ["numpy>=1.24"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.21", "ruff>=0.4"]
+
+[project.scripts]
+alecto = "alecto.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["alecto"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100

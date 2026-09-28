@@ -1,0 +1,53 @@
+# =============================================================================
+# Alecto — repository ignore rules
+#
+# Generic Python project hygiene only. Anything specific to a local working
+# setup (scratch notes, private design documents, generated reports, evaluation
+# artifacts, stand-in harnesses) is deliberately NOT listed here: those names
+# would themselves be project information. Keep them in your own
+# `.git/info/exclude` or a global excludes file.
+# =============================================================================
+
+# --- Python bytecode / build artifacts ---------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+ENV/
+
+# --- Test / lint / type-check caches -----------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# --- Secrets and machine-local configuration ---------------------------------
+.env
+.env.*
+*.pem
+*.key
+secrets.json
+
+# --- Editor / OS noise -------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
