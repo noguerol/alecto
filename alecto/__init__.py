@@ -15,7 +15,7 @@ from .quality import QUALITY_SUITES, load_quality_samples, run_quality_suite
 from .refusal import compute_refusal_metrics
 from .streaming import StreamEvent
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [
     "__version__",

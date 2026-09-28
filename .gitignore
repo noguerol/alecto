@@ -51,3 +51,6 @@ secrets.json
 *~
 .DS_Store
 Thumbs.db
+# t-plan: private runtime state — never commit or publish
+plan_*.md
+plan.md

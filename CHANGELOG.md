@@ -3,6 +3,37 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-09-28
+
+Documentation accuracy. The user guide advertised an API that does not exist, so
+every example below failed with `ImportError` or `AttributeError` when followed.
+
+### Fixed
+
+- `docs/alecto.md` configuration example used `AlectoConfig.from_file()`,
+  `config.targets` and `config.add_target()`. The real entry point is
+  `load_config(path)`; targets are `TargetSpec` records, not config state.
+- Performance example used `run_performance_suite(target, cells)` and
+  `PerformanceCell(name=…, kind=…)`. The real API is
+  `run_performance_cell(cell, request_fn)` with
+  `PerformanceCell(cell_id=…, mode=…, target=…, workload=…)`.
+- Quality examples used `QualitySuite("…")`. There is no such class; the suites
+  are addressed by `load_quality_samples(suite_name)` with `QualityBenchmark`
+  subclasses, or by `run_quality_suite(suite_name, adapter, …)`.
+- Context example used `ContextSuite` / `run_context_benchmark`; the real API is
+  `ContextGenerator(ContextConfig(...)).generate()` and
+  `RetrievalTaskGenerator(...).generate_single_kv()` and friends.
+- `make_streaming_request_fn` was documented with one argument; it takes an
+  adapter factory and the request step.
+
+All 22 constructs now shown in the guide are verified by execution.
+
+### Testing
+
+- New `TestDocumentedApiExists` guard: every `from alecto… import …` in the user
+  guide must resolve, and the documented timing fields and quality-suite names
+  must exist. This catches the whole drift family rather than one instance.
+
 ## [0.1.3] — 2026-09-28
 
 Repository hygiene: removes project-specific names from versioned files and

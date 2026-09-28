@@ -1,6 +1,6 @@
 # Alecto — Local-First, Agent-Native Execution Engine for LLM Benchmarking
 
-**Version:** 0.1.3  
+**Version:** 0.1.4  
 **License:** MIT  
 **Python:** ≥ 3.11  
 **Dependencies:** `httpx`, `jsonschema` (runtime); `pytest`, `ruff` (dev)
@@ -251,25 +251,29 @@ class Verdict(str, Enum):
 ### 4.1 Configuration (`alecto/config.py`)
 
 ```python
-from alecto.config import AlectoConfig
+from alecto.config import load_config, AlectoConfig
+from alecto.domain import TargetSpec
+from alecto.enums import TargetKind
 
-# Load configuration from a JSON file
-config = AlectoConfig.from_file("config.json")
+# Load configuration from a TOML or JSON file (or from the environment when
+# no path is given).
+config = load_config("config.json")
+print(config.data_dir, config.default_timeout_s, config.max_concurrent_tasks)
 
-# Access targets
-for target in config.targets:
-    print(f"{target.id}: {target.endpoint} ({target.model})")
-
-# Add a new target
-config.add_target(
-    id="local_vllm",
-    kind="local",
-    endpoint="http://localhost:8000",
+# Targets are described by TargetSpec records, not by the config object.
+target = TargetSpec(
+    kind=TargetKind.OPENAI,
+    endpoint="http://localhost:8000/v1",
     model="qwen2.5-7b",
 )
+```
 
-# Save configuration
-config.save("config.json")
+`AlectoConfig` also accepts plain strings for its path fields, so it can be
+built directly:
+
+```python
+config = AlectoConfig(data_dir="./data", default_timeout_s=60.0, max_concurrent_tasks=4)
+config.ensure_dirs()
 ```
 
 Configuration file format:
@@ -597,21 +601,53 @@ The performance suite (`alecto/performance.py`) measures:
 ### 7.1 Performance Cells
 
 ```python
-from alecto.performance import PerformanceCell, run_performance_suite
+import asyncio
+from alecto.adapters import get_adapter
+from alecto.domain import TargetSpec
+from alecto.enums import LoopMode, TargetKind
+from alecto.performance import (
+    PerformanceCell,
+    make_streaming_request_fn,
+    run_performance_cell,
+)
 
-# Define a cell: chat with C=1/2/4, latency/prefill with C=1
+target = TargetSpec(
+    kind=TargetKind.OPENAI,
+    endpoint="http://localhost:8000/v1",
+    model="qwen2.5-7b",
+)
+
+# One cell per measurement point: closed-loop chat at C=1, 2 and 4.
 cells = [
-    PerformanceCell(name="chat_c1", kind="chat", concurrency=1),
-    PerformanceCell(name="chat_c2", kind="chat", concurrency=2),
-    PerformanceCell(name="chat_c4", kind="chat", concurrency=4),
-    PerformanceCell(name="latency_c1", kind="latency", concurrency=1),
-    PerformanceCell(name="prefill_c1", kind="prefill", concurrency=1),
+    PerformanceCell(
+        cell_id=f"chat_c{c}", mode=LoopMode.CLOSED, target=target,
+        workload="chat", concurrency=c, samples=20, streaming=True,
+    )
+    for c in (1, 2, 4)
 ]
 
-results = run_performance_suite(target, cells)
-for r in results:
-    print(f"{r.cell_name}: TTFT={r.ttft_ms:.1f}ms, TTLT={r.ttl_t_ms:.1f}ms, TPS={r.tps:.1f}")
+step = {
+    "messages": [{"role": "user", "content": "Explain what a benchmark harness measures."}],
+    "temperature": 0.0,
+    "max_tokens": 256,
+}
+
+# A fresh adapter per request (closed afterwards); real t_first_byte/t_first
+# timestamps give distinct TTFB and TTFT instead of a fabricated TTFT.
+request_fn = make_streaming_request_fn(lambda: get_adapter(target), step)
+
+for cell in cells:
+    result = asyncio.run(run_performance_cell(cell, request_fn))
+    m = result.metrics
+    print(f"{result.cell_id}: TTFT={m.ttft_ms:.1f}ms TTFB={m.ttfb_ms:.1f}ms "
+          f"E2E={m.e2e_ms:.1f}ms p50={m.p50_ms:.1f}ms TPS={m.tokens_per_s:.1f}")
 ```
+
+`result.metrics` is a `TimingMetrics` record (`ttfb_ms`, `ttft_ms`, `e2e_ms`,
+`tokens_per_s`, `p50_ms`, `p90_ms`, `p95_ms`, `n`). `ttft_status`/`ttfb_status`
+are populated instead of a number when a capability is missing, so an absent
+measurement is never silently reported as zero. `ConcurrencySweep` builds a
+sweep of cells for you; see §7.3.
 
 ### 7.2 Metrics
 
@@ -639,14 +675,19 @@ The quality suite (`alecto/quality.py`) implements benchmark adapters for:
 ### 8.1 Running a Quality Benchmark
 
 ```python
-from alecto.quality import QualitySuite, run_quality_benchmark
+from alecto.quality import QUALITY_SUITES, load_quality_samples, run_quality_benchmark
 
-suite = QualitySuite("mmlu_pro")
-results = run_quality_benchmark(target, suite, sample_count=12)
+assert "mmlu_pro" in QUALITY_SUITES
 
-for r in results:
-    print(f"{r.benchmark}: score={r.score:.2f}/{r.max_score:.2f}, pass={r.pass_}")
+samples = load_quality_samples("mmlu_pro")          # bundled fixtures in this release
+result = await run_quality_benchmark(benchmark, adapter, concurrency=1)
+print(f"{result.benchmark_name}: score={result.score:.3f}")
 ```
+
+`run_quality_suite(suite_name, adapter, limit=None, concurrency=1)` is the
+higher-level entry point: it loads the samples, runs the matching benchmark and
+returns a coverage-aware artifact dict. The stand-alone suite runners wrap it
+and add artifact/report writing.
 
 ### 8.2 Stratification
 
@@ -673,14 +714,33 @@ The context suite (`alecto/context.py`) measures:
 ### 9.1 Context Positions
 
 ```python
-from alecto.context import ContextSuite, run_context_benchmark
+from alecto.context import ContextConfig, ContextGenerator, RetrievalTaskGenerator
 
-suite = ContextSuite(positions=[100, 500, 1000, 2000, 4000], lengths=[1], seeds=[1729])
-results = run_context_benchmark(target, suite)
+# Deterministic long-context haystacks with planted needles.
+gen = ContextGenerator(ContextConfig(
+    target_length=4000,
+    num_needles=1,
+    difficulty="medium",
+    seed=1729,
+))
+context = gen.generate()          # GeneratedContext
+print(context.actual_length, context.positions, context.expected_answer)
 
-for r in results:
-    print(f"position={r.position}: accuracy={r.accuracy:.2f}")
+# Turn the haystack into retrieval probes. Each generator returns one
+# RetrievalTask with its own scoring metadata.
+tasks = RetrievalTaskGenerator(gen)
+for task in (
+    tasks.generate_single_kv(),
+    tasks.generate_multi_needle(num_needles=3),
+    tasks.generate_two_evidence(),
+    tasks.generate_absent_key(),
+):
+    print(task.task_type.value, task.question[:60])
 ```
+
+Needle *positions* live on the generated context, so position sensitivity is
+expressed by varying `ContextConfig.target_length` and reading
+`context.positions` back.
 
 ### 9.2 Metrics
 
@@ -858,10 +918,11 @@ print(summary)
 The IFEval suite measures whether the model follows instructions in the prompt:
 
 ```python
-from alecto.quality import QualitySuite
+from alecto.quality import IFEvalBenchmark, load_quality_samples, run_quality_benchmark
 
-suite = QualitySuite("ifeval")
-results = run_quality_benchmark(target, suite, sample_count=12)
+benchmark = IFEvalBenchmark(load_quality_samples("ifeval"))
+result = await run_quality_benchmark(benchmark, adapter)
+print(result.benchmark_name, result.score)
 ```
 
 ### 12.2 Format Compliance
@@ -1502,7 +1563,7 @@ pytest --cov=alecto
 ```json
 {
   "system": "alecto",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "purpose": "Local-first, agent-native execution engine for LLM benchmarking",
   "modules": {
     "domain": "Core dataclasses (TargetSpec, Plan, Task, Evidence, BenchmarkResult)",
