@@ -1,6 +1,6 @@
 # Alecto — Local-First, Agent-Native Execution Engine for LLM Benchmarking
 
-**Version:** 0.1.6  
+**Version:** 0.1.7  
 **License:** MIT  
 **Python:** ≥ 3.11  
 **Dependencies:** `httpx`, `jsonschema` (runtime); `pytest`, `ruff` (dev)
@@ -1563,7 +1563,7 @@ pytest --cov=alecto
 ```json
 {
   "system": "alecto",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "purpose": "Local-first, agent-native execution engine for LLM benchmarking",
   "modules": {
     "domain": "Core dataclasses (TargetSpec, Plan, Task, Evidence, BenchmarkResult)",

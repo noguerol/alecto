@@ -209,6 +209,7 @@ Resolution order: CLI arguments, then environment variables, then defaults.
 | `ALECTO_TIMEOUT` | Request timeout (seconds) | `30.0` |
 | `ALECTO_MAX_CONCURRENT` | Maximum concurrent tasks | `4` |
 | `ALECTO_MOCK` | Force the mock backend | `false` |
+| `ALECTO_EVAL_PYTHON` | Interpreter that has lm-evaluation-harness, for official benchmarks | *(auto-detected)* |
 
 ```python
 from alecto import AlectoConfig
@@ -241,6 +242,17 @@ against a one-slot server reduces throughput; it does not increase it.
 
 ## Benchmark suites
 
+Alecto works with benchmarks on two levels, and they are not interchangeable:
+
+| | Bundled fixtures | Official benchmarks |
+| --- | --- | --- |
+| What runs | Small synthetic sets shipped in the package | The real dataset, via `lm-evaluation-harness` |
+| Leaderboard comparable | **No** | **Yes** (`comparable: true`) |
+| Needs network | No | Yes |
+| Cost | Seconds | Hours for a full split |
+
+**Bundled fixtures** (offline, for smoke and regression runs):
+
 | Suite | Protocol id | Notes |
 | --- | --- | --- |
 | `mmlu_pro` | `mmlu_pro.generative_budgeted.v1` | Multiple-choice general knowledge. |
@@ -248,12 +260,40 @@ against a one-slot server reduces throughput; it does not increase it.
 | `humaneval` | `humaneval.instruct_budgeted.v1` | Code generation, scored by execution in a container sandbox. |
 | `ifeval` | `ifeval.strict.v1` | Instruction following, strict and loose accuracy. |
 
-> **On the bundled fixtures.** Alecto ships small synthetic fixtures so the
-> suites run offline and regressions are caught in CI. They are **not** official
-> benchmark subsets and scores from them are **not** leaderboard comparable. For
-> published numbers, run the real datasets with an external harness and import
-> the results — `alecto.lmeval_adapter` converts `lm-evaluation-harness` output
-> into Alecto's schema and marks it `comparable: true`.
+> These fixtures are **not** official benchmark subsets and scores from them are
+> **not** leaderboard comparable. They exist so the suites run offline and
+> regressions are caught in CI.
+
+**Official benchmarks** run the real datasets and are leaderboard comparable. The
+same four suites are available officially, plus `mmlu`, `arc_challenge`,
+`hellaswag`, `truthfulqa`, `winogrande`, `gpqa`, `bbh`, `drop`, `piqa`, `mathqa`,
+`mbpp` and `lambada_openai` — 16 in total. Request one with `source: "official"`:
+
+```python
+# fixtures (default for a name that has them): fast, offline, not comparable
+make_plan(suite="gsm8k")
+
+# the real dataset: comparable to a leaderboard number
+make_plan(suite="gsm8k", source="official")
+```
+
+Alecto does **not** vendor the evaluation harness. Install
+`lm-evaluation-harness` in a separate environment and point Alecto at it:
+
+```bash
+python -m venv .venv-eval && .venv-eval/bin/pip install lm-eval
+export ALECTO_EVAL_PYTHON=.venv-eval/bin/python
+```
+
+If no harness is found, the operation fails with a typed
+`alecto.tool.unsupported` error. It never falls back to fixtures, because a
+fixture score presented as an official one is exactly what this separation
+exists to prevent.
+
+Why not bundle a second framework: an alternative harness carries ~122
+transitive packages against Alecto's 13, and would introduce a second
+implementation of benchmarks Alecto already reaches — two scorers under one
+benchmark name means two different numbers for "GSM8K".
 
 ## Architecture
 

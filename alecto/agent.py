@@ -101,6 +101,16 @@ def _default_operations() -> list[Operation]:
                     "profile": {"type": "string", "enum": ["smoke", "quick", "compare", "standard"]},
                     "budget_s": {"type": "number"},
                     "suite": {"type": "string"},
+                    "source": {
+                        "type": "string",
+                        "enum": ["fixtures", "official"],
+                        "description": (
+                            "Which implementation to run: 'fixtures' (the default for a "
+                            "name that has bundled fixtures) is the offline synthetic set "
+                            "and is NOT leaderboard comparable; 'official' runs the real "
+                            "dataset through the external harness."
+                        ),
+                    },
                     "seed": {"type": "integer"},
                     "prompt_tps": {"type": "number", "description": "measured prefill throughput; assumed when omitted"},
                     "output_tps": {"type": "number", "description": "measured decode throughput; assumed when omitted"},

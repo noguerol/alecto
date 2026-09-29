@@ -20,6 +20,7 @@ class AlectoConfig:
     evidence_dir: Path | None = None
     report_dir: Path | None = None
     mock_backend: bool = False
+    eval_python: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -71,6 +72,9 @@ def load_config(path: str | Path | None = None) -> AlectoConfig:
         "ALECTO_TIMEOUT": "default_timeout_s",
         "ALECTO_MAX_CONCURRENT": "max_concurrent_tasks",
         "ALECTO_MOCK": "mock_backend",
+        # Interpreter that carries lm-evaluation-harness, for official
+        # benchmarks. Alecto never vendors the harness itself.
+        "ALECTO_EVAL_PYTHON": "eval_python",
     }
     for env_var, attr in env_map.items():
         val = os.environ.get(env_var)
@@ -81,6 +85,11 @@ def load_config(path: str | Path | None = None) -> AlectoConfig:
                 setattr(config, attr, float(val) if attr == "default_timeout_s" else int(val))
             elif attr == "mock_backend":
                 config.mock_backend = val.lower() in ("1", "true", "yes")
+            else:
+                # A plain string setting. Set explicitly rather than ignored:
+                # a documented variable that silently does nothing is worse
+                # than an unsupported one.
+                setattr(config, attr, val)
 
     return config
 

@@ -177,7 +177,7 @@ class TestRefusalsAreExplicit:
             )
 
     def test_unknown_suite_is_reported(self, service, mock_target):
-        with pytest.raises(UnsupportedOperation, match="no bundled samples"):
+        with pytest.raises(ValueError, match="unknown suite"):
             service.create_plan(
                 {"target_ids": [mock_target], "profile": "smoke", "suite": "bogus"}
             )

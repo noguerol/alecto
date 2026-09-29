@@ -94,7 +94,7 @@ instead of silently doing the wrong thing.
 | `alecto_configure_target` | `target`, `mode`, `endpoint?`, `model?`, `title?` | `mode` ∈ `openai`, `openai_compatible`, `ollama`, `llm`, `llmstudio`, `mock`. Persists a named target. |
 | `alecto_list_targets` | `target_id_filter?` | Configured targets. |
 | `alecto_capabilities` | `target_id`, `probe_level` | Observed capabilities only; unobserved fields stay `null` — never guessed. |
-| `alecto_create_plan` | `target_ids`, `profile`, `budget_s?`, `suite?`, `seed?`, `prompt_tps?`, `output_tps?`, `expected_output_tokens?` | `profile` ∈ `smoke`, `quick`, `compare`, `standard`. Default suite `mmlu_pro`. |
+| `alecto_create_plan` | `target_ids`, `profile`, `budget_s?`, `suite?`, `source?`, `seed?`, `prompt_tps?`, `output_tps?`, `expected_output_tokens?` | `profile` ∈ `smoke`, `quick`, `compare`, `standard`. Default suite `mmlu_pro`. `source` ∈ `fixtures`, `official` (see below). |
 | `alecto_start_run` | `plan_id`, `idempotency_key` | Runs the plan (synchronously) and records results. Same key ⇒ same run, no re-execution. |
 | `alecto_run_status` | `run_id?` | Omit for the latest run. |
 | `alecto_cancel_run` | `run_id` | Terminal runs are returned unchanged. |
@@ -104,6 +104,39 @@ instead of silently doing the wrong thing.
 | `alecto_analyse_experiment` | `experiment_id` | Main/interaction contrasts. Ids come from `alecto_compare` with `mode="group"`. |
 | `alecto_export_report` | `run_id`, `format`, `output_path?` | `format` ∈ `markdown`, `md`, `json`, `csv`, `html`. Returns `path` and a sha256 `digest`. |
 | `alecto_judge_run` | `run_id`, `judge_target?`, `budget_s?` | Deterministic rubric scoring of stored responses. No endpoint needed. |
+
+### Fixtures vs official benchmarks — read this before reporting a score
+
+`alecto_list_suites` returns two separate lists, and they are not
+interchangeable:
+
+| | `suites` | `official_benchmarks` |
+| --- | --- | --- |
+| What runs | Bundled synthetic fixtures | The real dataset via an external harness |
+| Comparable to a leaderboard | **No** | **Yes** (`comparable: true`) |
+| Needs network | No | Yes (dataset download) |
+| Cost | Seconds | Hours for a full split |
+
+Control this with `source` on `alecto_create_plan`:
+
+- `source: "fixtures"` — the offline set. Default for the four names that have
+  fixtures (`mmlu_pro`, `gsm8k`, `humaneval`, `ifeval`), so quick checks stay
+  fast and offline.
+- `source: "official"` — the real benchmark. **Use this whenever the user wants
+  a number they can compare with anything.**
+
+Names that exist in both registries default to `fixtures`. That means
+`suite: "gsm8k"` on its own does **not** give you a leaderboard number — pass
+`source: "official"` explicitly. Names that only exist officially (`gpqa`,
+`arc_challenge`, `hellaswag`, `truthfulqa`, `winogrande`, `bbh`, `drop`, `mmlu`,
+`piqa`, `mathqa`, `mbpp`, `lambada_openai`) resolve to the official run
+automatically.
+
+Official runs need `lm-evaluation-harness` in a separate interpreter. Alecto does
+not bundle it; set `ALECTO_EVAL_PYTHON` to such an interpreter. If none is found
+the operation fails with `alecto.tool.unsupported` and instructions — it never
+silently falls back to fixtures, because a fixture score presented as an official
+one is the exact failure this distinction exists to prevent.
 
 ### Canonical workflow
 
@@ -153,6 +186,7 @@ falling back to `~/.alecto`.
 | `ALECTO_TIMEOUT` | Request timeout (s) | `30.0` |
 | `ALECTO_MAX_CONCURRENT` | Max concurrent tasks | `4` |
 | `ALECTO_MOCK` | Force the mock backend | `false` |
+| `ALECTO_EVAL_PYTHON` | Interpreter that has lm-evaluation-harness, for official benchmarks | *(auto-detected)* |
 
 ---
 

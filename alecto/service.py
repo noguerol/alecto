@@ -36,6 +36,7 @@ from .config import AlectoConfig, default_config
 from .domain import BenchmarkResult, Plan, TargetSpec, Task
 from .enums import BenchmarkCategory, TargetKind, TaskStatus
 from .errors import AlectoError
+from .official import OFFICIAL_BENCHMARKS, get_official
 from .storage import Storage
 
 SCHEMA_VERSION = "1.0"
@@ -258,10 +259,30 @@ class AlectoService:
         }
 
     def list_suites(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Bundled fixture suites plus the official benchmarks Alecto can drive.
+
+        Fixtures and official benchmarks are reported separately and labelled,
+        because only the latter are leaderboard comparable.
+        """
+        from .official import engine_status, official_benchmarks
+
         suites = installed_suites()
+        official = [b.to_dict() for b in official_benchmarks()]
         if args.get("installed_only"):
             suites = [s for s in suites if s["installed"]]
-        return {"suites": suites}
+            status = engine_status(self.config)
+            official = official if status["available"] else []
+        return {
+            "suites": suites,
+            "official_benchmarks": official,
+            "official_engine": engine_status(self.config),
+            "note": (
+                "'suites' are bundled synthetic fixtures for smoke and regression "
+                "runs and are NOT leaderboard comparable. 'official_benchmarks' "
+                "run the real datasets through an external "
+                "lm-evaluation-harness and are."
+            ),
+        }
 
     def configure_target(self, args: dict[str, Any]) -> dict[str, Any]:
         from .adapters import get_adapter  # noqa: F401  (validates import early)
@@ -316,6 +337,62 @@ class AlectoService:
         target_id = target_ids[0]
         spec = self.targets.spec(target_id)
 
+        official_bench = get_official(suite)
+        has_fixtures = suite in suite_names()
+
+        if not has_fixtures and official_bench is None:
+            raise ValueError(
+                f"unknown suite {suite!r}. Bundled fixtures: {', '.join(suite_names())}. "
+                f"Official benchmarks: {', '.join(sorted(OFFICIAL_BENCHMARKS))}."
+            )
+
+        source = args.get("source")
+        if source is None:
+            # Names that exist on both sides would otherwise change meaning
+            # silently. Defaulting to the fixture set keeps offline and CI runs
+            # working; asking for the real dataset is an explicit act.
+            source = "fixtures" if has_fixtures else "official"
+        if source == "fixtures" and not has_fixtures:
+            raise ValueError(
+                f"suite {suite!r} has no bundled fixtures; request it with "
+                f"source='official' to run the real dataset"
+            )
+
+        if source == "official":
+            # Official benchmarks run through the external harness, so the plan
+            # only has to record which benchmark to run and against what.
+            budget = float(args.get("budget_s") or 0) or 600.0
+            plan_id = str(uuid.uuid4())
+            record = {
+                "plan_id": plan_id,
+                "plan_hash": _digest({"suite": suite, "target": target_id,
+                                      "profile": profile, "official": True}),
+                "target_id": target_id,
+                "suite": suite,
+                "profile": profile,
+                "budget_s": budget,
+                "source": "official",
+                "official": True,
+                "task": official_bench.task,
+                "items": [],
+                "throughput": {"source": "unknown"},
+                "created_at": _now(),
+            }
+            self.plans.add(plan_id, record)
+            return {
+                "plan_id": plan_id,
+                "plan_hash": record["plan_hash"],
+                "coverage": {
+                    "suite": suite,
+                    "source": "official",
+                    "official": True,
+                    "comparable": True,
+                    "task": official_bench.task,
+                    "target_id": target_id,
+                },
+                "throughput_source": "unknown",
+            }
+
         samples = load_quality_samples(suite) if suite in suite_names() else []
         items = [{"id": sample.id, "suite": suite} for sample in samples]
         if not items:
@@ -353,6 +430,7 @@ class AlectoService:
             "suite": suite,
             "profile": profile,
             "budget_s": budget,
+            "source": "fixtures",
             "items": items,
             "throughput": {
                 "prompt_tps": throughput.prompt_tps,
@@ -366,13 +444,17 @@ class AlectoService:
         return {
             "plan_id": plan_id,
             "plan_hash": plan_hash,
-            "coverage": {"suite": suite, "samples": len(items), "target_id": target_id},
+            "coverage": {
+                "suite": suite,
+                "source": "fixtures",
+                "comparable": False,
+                "samples": len(items),
+                "target_id": target_id,
+            },
             "throughput_source": record["throughput"]["source"],
         }
 
     def start_run(self, args: dict[str, Any]) -> dict[str, Any]:
-        from .adapters import get_adapter
-        from .quality import run_quality_suite
 
         plan = self.plans.get(args["plan_id"])
         idempotency_key = args["idempotency_key"]
@@ -403,15 +485,13 @@ class AlectoService:
             task = Task(target=spec, status=TaskStatus.RUNNING)
             storage.create_task(task)
 
-            adapter = get_adapter(spec)
-            try:
-                suite_artifact = self._run_async(run_quality_suite(plan["suite"], adapter))
-            finally:
-                close = getattr(adapter, "aclose", None)
-                if close is not None:
-                    self._run_async(close())
-
-            score = suite_artifact.get("score")
+            if plan.get("official"):
+                suite_artifact = self._run_official(plan, spec)
+                comparable = True
+            else:
+                suite_artifact = self._run_fixture_suite(plan, spec)
+                comparable = False
+            score = _artifact_score(suite_artifact)
             bench_result = BenchmarkResult(
                 task_id=task.id,
                 benchmark=plan["suite"],
@@ -427,34 +507,66 @@ class AlectoService:
 
             artifact = self.runs.artifact_path(run_id, "quality-results.json")
             artifact.parent.mkdir(parents=True, exist_ok=True)
-            payload = {
-                "schema": "alecto.quality_results.v1",
-                "generated_at": _now(),
-                "endpoint": spec.endpoint,
-                "model": spec.model,
-                "fixtures": {"synthetic": True, "path": "bundled"},
-                "results": [{
-                    "suite": suite_artifact.get("suite", plan["suite"]),
-                    "protocol_id": suite_artifact.get("protocol_id"),
-                    "protocol": suite_artifact.get("protocol_id"),
-                    "comparable": False,
-                    "score": score,
-                    "coverage": suite_artifact.get("coverage"),
-                    "sandbox_mode": suite_artifact.get("sandbox_mode"),
-                    "items": suite_artifact.get("items"),
-                }],
-            }
+            if comparable:
+                # The harness converter already produced Alecto's schema.
+                payload = suite_artifact
+                payload.setdefault("generated_at", _now())
+                payload.setdefault("endpoint", spec.endpoint)
+                payload.setdefault("model", spec.model)
+            else:
+                payload = {
+                    "schema": "alecto.quality_results.v1",
+                    "generated_at": _now(),
+                    "endpoint": spec.endpoint,
+                    "model": spec.model,
+                    "fixtures": {"synthetic": True, "path": "bundled"},
+                    "results": [{
+                        "suite": suite_artifact.get("suite", plan["suite"]),
+                        "protocol_id": suite_artifact.get("protocol_id"),
+                        "protocol": suite_artifact.get("protocol_id"),
+                        "comparable": False,
+                        "score": score,
+                        "coverage": suite_artifact.get("coverage"),
+                        "sandbox_mode": suite_artifact.get("sandbox_mode"),
+                        "items": suite_artifact.get("items"),
+                    }],
+                }
             artifact.write_text(json.dumps(payload, indent=2), encoding="utf-8")
             self.runs.update(run_id, state="completed", finished_at=_now(),
-                             result_path=str(artifact), task_id=task.id)
+                             result_path=str(artifact), task_id=task.id,
+                             comparable=comparable)
             return {"run_id": run_id, "state": "completed", "result_path": str(artifact),
-                    "score": score}
+                    "score": score, "comparable": comparable}
         except Exception as exc:
             self.runs.update(run_id, state="failed", finished_at=_now(),
                              finished_error=f"{type(exc).__name__}: {exc}")
             raise
         finally:
             storage.close()
+
+    def _run_fixture_suite(self, plan: dict[str, Any], spec: Any) -> dict[str, Any]:
+        """Run a bundled synthetic fixture suite through an in-process adapter."""
+        from .adapters import get_adapter
+        from .quality import run_quality_suite
+
+        adapter = get_adapter(spec)
+        try:
+            return self._run_async(run_quality_suite(plan["suite"], adapter))
+        finally:
+            close = getattr(adapter, "aclose", None)
+            if close is not None:
+                self._run_async(close())
+
+    def _run_official(self, plan: dict[str, Any], spec: Any) -> dict[str, Any]:
+        """Run an official benchmark through the external harness."""
+        from .official import run_official_benchmark
+
+        return run_official_benchmark(
+            plan["suite"],
+            base_url=spec.endpoint.rstrip("/") + "/chat/completions",
+            model=spec.model or "local-model",
+            config=self.config,
+        )
 
     def run_status(self, args: dict[str, Any]) -> dict[str, Any]:
         run_id = args.get("run_id")
@@ -678,6 +790,26 @@ class AlectoService:
                 details=entry.get("coverage") or {},
             ))
         return out
+
+
+def _artifact_score(artifact: dict[str, Any]) -> float | None:
+    """Read the headline score from either artifact shape.
+
+    A fixture run returns the suite result directly (``score`` at the top
+    level); an official run returns a ``alecto.quality_results.v1`` document
+    whose score lives inside ``results[0]``. Reporting ``null`` for a run that
+    did score would be indistinguishable from a failed measurement.
+    """
+    if not isinstance(artifact, dict):
+        return None
+    if isinstance(artifact.get("score"), (int, float)):
+        return float(artifact["score"])
+    results = artifact.get("results")
+    if isinstance(results, list) and results and isinstance(results[0], dict):
+        value = results[0].get("score")
+        if isinstance(value, (int, float)):
+            return float(value)
+    return None
 
 
 def _as_list(value: Any) -> list[str]:

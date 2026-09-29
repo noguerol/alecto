@@ -3,6 +3,56 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] — 2026-09-29
+
+Official, leaderboard-comparable benchmarks — without growing Alecto's
+dependency tree.
+
+### Context
+
+The bundled quality suites are synthetic fixtures. Alecto had no way to produce a
+number comparable to a published leaderboard, because the only route (`lm-eval`
+via a stand-in script) was development tooling and could not be reached through
+the agent surface at all.
+
+Adopting a full evaluation framework (EvalScope) as the engine was evaluated and
+rejected: it drags in ~122 transitive packages against Alecto's 13, duplicates
+benchmarks Alecto already reaches, and would put two different scorers behind the
+same benchmark name — two different numbers for "GSM8K". It would also do nothing
+for the real bottleneck, which is the endpoint's throughput, not the framework.
+
+### Added
+
+- `alecto/official.py`: a curated registry of 16 official benchmarks (the four
+  fixture suites plus `mmlu`, `arc_challenge`, `hellaswag`, `truthfulqa`,
+  `winogrande`, `gpqa`, `bbh`, `drop`, `piqa`, `mathqa`, `mbpp`,
+  `lambada_openai`). Every task id was verified to exist in the harness before
+  being listed.
+- An **optional external engine**: Alecto drives an `lm-evaluation-harness`
+  installation that lives in its own interpreter and converts its output through
+  the existing `lmeval_adapter`. No new dependencies in the core; the harness is
+  never vendored.
+- `alecto_create_plan` takes `source: fixtures | official`, and
+  `alecto_list_suites` returns fixtures and official benchmarks as separate,
+  labelled lists with the engine's status.
+- `ALECTO_EVAL_PYTHON` names the interpreter that carries the harness.
+
+### Fixed
+
+- **A name present in both registries changed meaning silently.** `suite:
+  "gsm8k"` would have switched from an offline fixture run to a 21-hour dataset
+  download. The default is now the fixture set and the real dataset is an
+  explicit `source: "official"`; both the plan and the run record which was used.
+- **A pinned engine was silently ignored.** `ALECTO_EVAL_PYTHON` pointing at a
+  broken interpreter fell through to auto-discovery and ran a *different*
+  harness, which makes measured numbers non-reproducible. An explicit engine is
+  now authoritative or the run fails.
+- `start_run` reported `score: null` for official runs, whose score lives inside
+  `results[0]` rather than at the top level — indistinguishable from a failed
+  measurement. Measured zeros are also preserved.
+
+617 tests pass; ruff clean.
+
 ## [0.1.6] — 2026-09-29
 
 Public release. The repository is now open.
