@@ -23,8 +23,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     # run command
     run = subparsers.add_parser("run", help="Run a benchmark task")
-    run.add_argument("--target", default="mock", help="Target kind")
+    run.add_argument("--target", default="mock", help="Target kind (openai, ollama, mock, ...)")
     run.add_argument("--benchmark", default="math_basic", help="Benchmark name")
+    run.add_argument("--endpoint", default="mock://test", help="Base URL of the endpoint")
+    run.add_argument("--model", default="", help="Model name to request")
     run.add_argument("--data-dir", default=None, help="Data directory")
 
     # list command
@@ -177,7 +179,11 @@ def run_task(args):
     config = _resolve_config(args)
     storage = Storage(config.data_dir / "alecto.db")
 
-    target = TargetSpec(kind=TargetKind(args.target), endpoint="mock://test")
+    target = TargetSpec(
+        kind=TargetKind(args.target),
+        endpoint=args.endpoint,
+        model=args.model or None,
+    )
     task = Task(target=target)
 
     async def execute():

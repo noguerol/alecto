@@ -3,6 +3,33 @@
 All notable changes to Alecto are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] — 2026-09-29
+
+Public release. The repository is now open.
+
+### Added
+
+- A banner and a rewritten `README.md`: what Alecto is for, the honesty rules it
+  follows, install and quick start, the agent surfaces, the Python API, metric
+  semantics, the benchmark suites and the architecture.
+- README guards in the test suite: every `alecto <command>` shown in a bash block
+  must be a registered command, every documented `run` flag must exist, every
+  named benchmark must be registered, the banner must open the file, and the
+  documented environment variables must match the code.
+
+### Fixed
+
+- **`alecto run` could not reach a real endpoint.** The target URL was hardcoded
+  to `mock://test`, so `--target openai` built an adapter pointed at the mock.
+  `--endpoint` and `--model` are now accepted, which is what the README had
+  claimed all along.
+- Documentation fixtures that resembled live provider credentials are replaced
+  with self-evidently synthetic values, so secret scanners do not raise a false
+  positive. The redaction tests still exercise the same code paths, and a
+  history rewrite removes the old strings.
+
+588 tests pass; ruff clean.
+
 ## [0.1.5] — 2026-09-28
 
 Agent integration: the MCP surface is now real and documented.

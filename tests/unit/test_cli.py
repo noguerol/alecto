@@ -19,7 +19,8 @@ from alecto.storage import Storage
 
 def _run(tmp_path):
     return run_task(argparse.Namespace(
-        target="mock", benchmark="math_basic", data_dir=str(tmp_path)
+        target="mock", benchmark="math_basic", endpoint="mock://test",
+        model="", data_dir=str(tmp_path),
     ))
 
 
@@ -55,7 +56,8 @@ def test_data_dir_is_honoured_by_every_command(tmp_path):
     could not find what an earlier one had written."""
     other = tmp_path / "nested" / "data"
     run_task(argparse.Namespace(
-        target="mock", benchmark="math_basic", data_dir=str(other)
+        target="mock", benchmark="math_basic", endpoint="mock://test",
+        model="", data_dir=str(other),
     ))
     assert (other / "alecto.db").exists()
 
